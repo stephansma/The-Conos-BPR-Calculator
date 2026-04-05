@@ -1,0 +1,39 @@
+name: Update BPR Standings
+
+# This controls WHEN the script runs
+on:
+  schedule:
+    # Runs automatically every 24 hours at 8:00 AM UTC (adjust as needed)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    # This enables the "secret password" manual trigger from your website
+
+# Grants the action permission to save the data.json file back to your repo
+permissions:
+  contents: write
+
+jobs:
+  calculate-bpr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Math & API Libraries
+        run: pip install pulp requests
+
+      - name: Run BPR Calculator
+        run: python calculate_bpr.py
+
+      - name: Commit and Push New Standings
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data.json
+          # Only commit if the stats have actually changed
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Updated BPR Standings" && git push)
