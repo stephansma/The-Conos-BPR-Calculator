@@ -7,8 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/javascript-lp-solver@0.4.24/prod/solver.js"></script>
+    
     <style>
         /* [KEEPING THE EXACT SAME DARK MODE CSS FROM PREVIOUS STEP] */
         :root {
@@ -175,7 +175,13 @@
 
     // 3. Fetch and Parse CSVs
     async function loadAllTeams() {
-        const fetchPromises = teams.map(team => 
+        // --- ADD THIS SAFETY CHECK ---
+        if (typeof solver === "undefined") {
+            document.getElementById('standings-body').innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ff4444;">Error: Math Engine failed to load. Please check your internet connection or disable strict ad-blockers for this page.</td></tr>`;
+            return;
+        }
+        // -----------------------------
+        const fetchPromises = teams.map(team =>
             fetch(`${team.id}.csv`)
                 .then(response => response.ok ? response.text() : null)
                 .then(csvText => {
