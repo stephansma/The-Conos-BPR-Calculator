@@ -173,40 +173,64 @@
         return { team_name: teamName, bpr_score: Math.round(totalScore), roster: optimalRoster };
     }
 
-    // 3. Fetch and Parse CSVs
+   // 3. Fetch and Parse CSVs
     async function loadAllTeams() {
-        // --- ADD THIS SAFETY CHECK ---
+        // Safety check to ensure math engine loaded
         if (typeof solver === "undefined") {
             document.getElementById('standings-body').innerHTML = `<tr><td colspan="3" style="text-align:center; color:#ff4444;">Error: Math Engine failed to load. Please check your internet connection or disable strict ad-blockers for this page.</td></tr>`;
             return;
         }
-        // -----------------------------
-        const fetchPromises = teams.map(team =>
+
+        const fetchPromises = teams.map(team => 
             fetch(`${team.id}.csv`)
                 .then(response => response.ok ? response.text() : null)
                 .then(csvText => {
                     if (!csvText) return null;
                     
-                    let parsedData = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                    // Turn OFF automatic headers because Fantrax uses multiple tables in one file
+                    let parsedData = Papa.parse(csvText, { header: false, skipEmptyLines: true });
                     let players = [];
-                    
+                    let headerMap = null;
+
                     parsedData.data.forEach(row => {
-                        // Extract points (ignoring missing data)
-                        let pts = parseFloat(row["Fantasy Points"]) || 0;
-                        let rawPos = row["Eligible"] || row["Pos"] || "";
+                        // 1. Scan down until we find the row that actually contains the column names
+                        if (row.includes("Player") && row.includes("Fantasy Points")) {
+                            headerMap = {};
+                            row.forEach((colName, idx) => {
+                                headerMap[colName.trim()] = idx;
+                            });
+                            return; // Skip this header row once mapped
+                        }
+
+                        // 2. Ignore structural rows like "Skaters" or "Goalies", or rows before we find the headers
+                        if (!headerMap || row.includes("Skaters") || row.includes("Goalies")) return;
+
+                        // 3. Extract the data using the indices we dynamically mapped
+                        let playerIdx = headerMap["Player"];
+                        let ptsIdx = headerMap["Fantasy Points"];
+                        
+                        // Fantrax uses "Eligible", but if that column is blank, fallback to "Pos"
+                        let rawPos = row[headerMap["Eligible"]] || row[headerMap["Pos"]] || "";
+
+                        // If the row doesn't have enough columns, skip it
+                        if (playerIdx === undefined || ptsIdx === undefined || !rawPos) return;
+
+                        let playerName = row[playerIdx];
+                        let pts = parseFloat(row[ptsIdx]) || 0;
                         
                         // Clean positions (e.g., '"C,LW"' -> ['C', 'LW'])
                         let posArray = rawPos.replace(/"/g, '').split(',').map(p => p.trim());
                         
-                        if (row["Player"] && posArray.length > 0) {
+                        if (playerName && posArray.length > 0 && playerName !== "Player") {
                             players.push({
-                                name: row["Player"],
+                                name: playerName,
                                 positions: posArray,
                                 points: pts
                             });
                         }
                     });
 
+                    // Once the whole file is successfully extracted, run the math!
                     return optimizeRoster(team.name, players);
                 })
         );
@@ -217,56 +241,6 @@
         finalStandings = results.filter(r => r !== null).sort((a, b) => b.bpr_score - a.bpr_score);
         renderStandings();
     }
-
-    // 4. Render the UI
-    function renderStandings() {
-        const tbody = document.getElementById('standings-body');
-        tbody.innerHTML = ''; 
-
-        if(finalStandings.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">No CSV files found. Make sure files like 'upi.csv' are in the same folder as this page.</td></tr>`;
-            return;
-        }
-        
-        finalStandings.forEach((team, index) => {
-            const tr = document.createElement('tr');
-            tr.className = `clickable-row rank-${index + 1}`;
-            tr.onclick = () => showTeamDetail(team); 
-            
-            tr.innerHTML = `
-                <td class="rank-col">${index + 1}</td>
-                <td class="team-name">${team.team_name}</td>
-                <td class="score-col">${team.bpr_score.toLocaleString()}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function showTeamDetail(team) {
-        document.getElementById('view-standings').classList.add('hidden');
-        document.getElementById('view-team').classList.remove('hidden');
-        document.getElementById('detail-team-name').innerText = team.team_name.toUpperCase();
-        document.getElementById('detail-total-score').innerText = team.bpr_score.toLocaleString();
-        
-        const tbody = document.getElementById('team-body');
-        tbody.innerHTML = ''; 
-        
-        team.roster.forEach(player => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><span class="pos-badge">${player.locked_position}</span></td>
-                <td style="font-weight: 600;">${player.name}</td>
-                <td class="score-col" style="color: var(--text-main); font-size: 15px;">${player.points}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function showStandings() {
-        document.getElementById('view-team').classList.add('hidden');
-        document.getElementById('view-standings').classList.remove('hidden');
-    }
-
     // Start App
     window.onload = loadAllTeams;
 </script>
