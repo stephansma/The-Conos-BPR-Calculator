@@ -18,7 +18,7 @@
             --text-main: #000000; 
             --text-muted: #888888;
             --text-subtle: #555555;
-            --accent-gold: #019ABD; 
+            --accent-color: #019ABD; 
             --row-hover: #FE8A65;
         }
         
@@ -36,6 +36,7 @@
             margin: 0 auto; 
             background-color: var(--bg-base); 
             min-height: 100vh;
+            padding-bottom: 50px;
         }
 
         .header { 
@@ -58,6 +59,13 @@
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
             font-weight: 600;
+        }
+
+        .header p#calc-date {
+            margin: 6px 0 0;
+            font-size: 12px;
+            color: var(--text-subtle);
+            font-weight: 500;
         }
         
         table { width: 100%; border-collapse: collapse; }
@@ -138,7 +146,7 @@
             padding: 20px;
         }
         .total-row .score-col { 
-            color: var(--accent-gold); 
+            color: var(--accent-color); 
             font-size: 22px; 
         }
         
@@ -149,24 +157,15 @@
             font-weight: 500; 
             font-size: 14px;
         }
-
-        .update-footer {
-            text-align: center;
-            padding: 30px 20px 50px;
-            color: var(--text-subtle);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            border-top: 1px solid var(--border-color);
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>The Conos BPR Calculator</h1>
+        <h1>The Conos BPR Calculations</h1>
         <p class="subtitle">The Conos League • End of Season Best Possible Roster</p>
+        <p id="calc-date">Calculating upload date...</p>
     </div>
 
     <div>
@@ -207,18 +206,12 @@
                 </tfoot>
             </table>
         </div>
-
-        <div class="update-footer" id="calc-date-footer">
-            Checking data sync...
-        </div>
-
     </div>
 </div>
 
 <script>
     // 1. CONFIGURATION
-    const CSV_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/Fantrax-Players-The%20Conos%20League.csv"; // PASTE YOUR RAW GITHUB CSV URL HERE
-    const DATE_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/update.txt"; // PASTE YOUR RAW GITHUB URL FOR update.txt HERE
+    const CSV_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/Fantrax-Players-The%20Conos%20League.csv"; // PASTE YOUR RAW GITHUB URL HERE
 
     const teamMap = {
         "ADB": "Armand's Dirty Birdz", "FZ": "Failowitz", "GG": "Ghol Gholab",
@@ -230,19 +223,21 @@
 
     let finalStandings = [];
 
-    // Fetches the text from your update.txt file
+    // Fetches the Last-Modified header from the raw CSV file
     async function fetchFileDate() {
-        const dateElement = document.getElementById('calc-date-footer');
+        const dateElement = document.getElementById('calc-date');
         try {
-            const response = await fetch(DATE_URL);
-            if (response.ok) {
-                const dateText = await response.text();
-                dateElement.innerText = "Data Last Updated: " + dateText.trim();
+            const response = await fetch(CSV_URL, { method: 'HEAD' });
+            const lastModified = response.headers.get('Last-Modified');
+            if (lastModified) {
+                const date = new Date(lastModified);
+                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                dateElement.innerText = "Data as of: " + date.toLocaleDateString('en-US', options);
             } else {
-                dateElement.innerText = "Data Last Updated: Check GitHub Repo"; 
+                dateElement.innerText = ""; // Hide if GitHub prevents reading the header via CORS
             }
         } catch (e) {
-            dateElement.innerText = "Data Last Updated: Unknown"; 
+            dateElement.innerText = ""; 
         }
     }
 
@@ -401,7 +396,7 @@
 
     // Initialize Everything
     window.onload = () => {
-        fetchFileDate(); // Gets the text from update.txt
+        fetchFileDate(); // Gets the modification timestamp
         loadLeagueData(); // Loads the CSV and runs the math
     };
 </script>
