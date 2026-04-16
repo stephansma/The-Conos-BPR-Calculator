@@ -3,65 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conos League - BPR Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Conos League - BPR</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/javascript-lp-solver@0.4.24/prod/solver.js"></script>
 
     <style>
         :root {
-            --bg-base: #0B0F19; --card-bg: #151A28; --border-color: #2A3241;
-            --text-main: #F3F4F6; --text-muted: #9CA3AF;
-            --accent-cyan: #00E6F2; --accent-green: #39FF14; --row-hover: #1E2536;
+            --bg-base: #000000; 
+            --bg-surface: #111111; 
+            --border-color: #222222;
+            --text-main: #FFFFFF; 
+            --text-muted: #888888;
+            --text-subtle: #555555;
+            --accent-gold: #D4AF37; 
+            --row-hover: #1A1A1A;
         }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-base); margin: 0; padding: 30px 20px; color: var(--text-main); min-height: 100vh; }
-        .container { max-width: 900px; margin: 0 auto; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; }
-        .header { padding: 30px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(21,26,40,1) 0%, rgba(11,15,25,1) 100%); }
-        .header-titles h1 { margin: 0; font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #FFFFFF; }
-        .header-titles p { margin: 5px 0 0; font-size: 14px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .content { padding: 0; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: var(--bg-base); 
+            margin: 0; 
+            padding: 0; 
+            color: var(--text-main); 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { 
+            max-width: 700px; /* Tighter width for better reading line-length */
+            margin: 0 auto; 
+            background-color: var(--bg-base); 
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        .header { 
+            padding: 40px 20px 20px; 
+            border-bottom: 1px solid var(--border-color); 
+        }
+
+        .header h1 { 
+            margin: 0; 
+            font-family: 'Merriweather', serif; /* Editorial Serif for main headers */
+            font-size: 28px; 
+            font-weight: 700; 
+            color: var(--text-main); 
+        }
+
+        .header p { 
+            margin: 8px 0 0; 
+            font-size: 13px; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            font-weight: 600;
+        }
+        
         table { width: 100%; border-collapse: collapse; }
-        th { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 16px 30px; background-color: #0F131F; border-bottom: 2px solid var(--border-color); }
-        td { padding: 18px 30px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
         
-        .clickable-row { transition: background-color 0.2s; cursor: pointer; }
+        th { 
+            color: var(--text-subtle); 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            text-align: left; 
+            padding: 12px 20px; 
+            border-bottom: 1px solid var(--border-color); 
+            font-weight: 600;
+        }
+        
+        td { 
+            padding: 16px 20px; 
+            border-bottom: 1px solid var(--border-color); 
+            vertical-align: middle;
+        }
+        
+        .clickable-row { cursor: pointer; transition: background-color 0.15s ease; }
         .clickable-row:hover { background-color: var(--row-hover); }
-        .rank-col { font-weight: 800; color: var(--text-muted); width: 50px; }
-        .team-name { font-weight: 600; font-size: 16px; color: var(--text-main); transition: color 0.2s; }
-        .clickable-row:hover .team-name { color: var(--accent-cyan); }
-        .score-col { font-weight: 800; font-size: 16px; text-align: right; color: var(--accent-cyan); font-variant-numeric: tabular-nums; }
         
-        .rank-1 .rank-col { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-        .rank-2 .rank-col { color: #C0C0C0; }
-        .rank-3 .rank-col { color: #CD7F32; }
+        .rank-col { font-weight: 700; color: var(--text-muted); width: 30px; font-size: 14px;}
+        .team-name { font-weight: 700; font-size: 16px; color: var(--text-main); }
         
-        .pos-badge { display: inline-block; border: 1px solid var(--border-color); background: #0B0F19; color: var(--text-muted); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; text-align: center; min-width: 24px; }
-        .btn-back { display: inline-flex; align-items: center; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: color 0.2s; margin: 30px 30px 10px; }
+        .score-col { 
+            font-weight: 700; 
+            font-size: 16px; 
+            text-align: right; 
+            color: var(--text-main); 
+            font-variant-numeric: tabular-nums; 
+        }
+        
+        /* Premium Badges for Positions */
+        .pos-badge { 
+            display: inline-block; 
+            color: var(--text-muted); 
+            font-size: 12px; 
+            font-weight: 700; 
+            text-align: left; 
+            width: 35px; 
+        }
+        
+        .player-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .btn-back { 
+            display: inline-flex; 
+            align-items: center; 
+            color: var(--text-muted); 
+            font-size: 13px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            margin: 20px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .btn-back:hover { color: var(--text-main); }
+        
         .hidden { display: none; }
-        .section-title { color: var(--text-main); font-size: 22px; font-weight: 800; margin: 0 30px 20px; text-transform: uppercase; letter-spacing: 1px; }
         
-        .total-row td { background-color: #0F131F; border-top: 2px solid var(--border-color); border-bottom: none; }
-        .total-row .score-col { color: var(--accent-green); font-size: 20px; text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
+        .section-title { 
+            font-family: 'Merriweather', serif;
+            color: var(--text-main); 
+            font-size: 24px; 
+            font-weight: 700; 
+            margin: 0 20px 20px; 
+        }
         
-        #loading-state { padding: 40px; text-align: center; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+        .total-row td { 
+            background-color: var(--bg-surface); 
+            border-top: 1px solid var(--border-color); 
+            border-bottom: none; 
+            padding: 20px;
+        }
+        .total-row .score-col { 
+            color: var(--accent-gold); 
+            font-size: 22px; 
+        }
+        
+        #loading-state { 
+            padding: 60px 20px; 
+            text-align: center; 
+            color: var(--text-muted); 
+            font-weight: 500; 
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <div class="header-titles">
-            <h1>League BPR Dashboard</h1>
-            <p>End-of-Season Roster Optimization</p>
-        </div>
+        <h1>BPR Standings</h1>
+        <p>The Conos League • End of Season Optimization</p>
     </div>
 
-    <div class="content">
+    <div>
         <div id="loading-state">
-            Downloading CSV and optimizing combinations...
+            Analyzing roster combinations...
         </div>
 
         <div id="view-standings" class="hidden">
@@ -70,7 +172,7 @@
                     <tr>
                         <th>Rnk</th>
                         <th>Franchise</th>
-                        <th style="text-align: right;">Total BPR</th>
+                        <th style="text-align: right;">Total Yield</th>
                     </tr>
                 </thead>
                 <tbody id="standings-body"></tbody>
@@ -78,12 +180,12 @@
         </div>
 
         <div id="view-team" class="hidden">
-            <div class="btn-back" onclick="showStandings()">← Return to Standings</div>
+            <div class="btn-back" onclick="navigateHome()">← Standings</div>
             <h2 class="section-title" id="detail-team-name">Team Name</h2>
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 60px;">Pos</th>
+                        <th style="width: 40px;">Pos</th>
                         <th>Player</th>
                         <th style="text-align: right;">Points</th>
                     </tr>
@@ -91,7 +193,7 @@
                 <tbody id="team-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="2" style="text-align: right; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Maximum Yield:</td>
+                        <td colspan="2" style="text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Optimized BPR:</td>
                         <td id="detail-total-score" class="score-col">0</td>
                     </tr>
                 </tfoot>
@@ -101,10 +203,9 @@
 </div>
 
 <script>
-    // 1. CONFIGURATION: Your exact raw GitHub link goes here
-    const CSV_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/Fantrax-Players-The%20Conos%20League.csv"; 
+    // 1. CONFIGURATION
+    const CSV_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/Fantrax-Players-The%20Conos%20League.csv"; // PASTE YOUR RAW GITHUB URL HERE
 
-    // Translation Map
     const teamMap = {
         "ADB": "Armand's Dirty Birdz", "FZ": "Failowitz", "GG": "Ghol Gholab",
         "GRN": "Greenalls", "JS": "Jokerin Salama", "KR": "Kitimat Rebels",
@@ -115,8 +216,8 @@
 
     let finalStandings = [];
 
-    // 2. The Math Engine (Now Highly Optimized using pure Simplex Linear Programming)
-    function optimizeRoster(teamName, players) {
+    // 2. Math Engine
+    function optimizeRoster(teamCode, teamName, players) {
         let model = {
             "optimize": "points",
             "opType": "max",
@@ -125,7 +226,6 @@
                 "D": {"equal": 4}, "G": {"equal": 3}
             },
             "variables": {} 
-            // NOTE: 'ints' block completely removed to prevent the browser from choking.
         };
 
         players.forEach((p, idx) => {
@@ -143,7 +243,6 @@
         let totalScore = 0;
 
         for (const [key, value] of Object.entries(results)) {
-            // value > 0.5 bypasses any 0.999 floating point math quirks
             if (value > 0.5 && key !== "feasible" && key !== "result" && key !== "bounded") {
                 let parts = key.split("_");
                 let playerIndex = parseInt(parts[0]);
@@ -155,10 +254,10 @@
 
         const posOrder = {"C":1, "LW":2, "RW":3, "D":4, "G":5};
         optimalRoster.sort((a, b) => posOrder[a.locked_position] - posOrder[b.locked_position] || b.points - a.points);
-        return { team_name: teamName, bpr_score: Math.round(totalScore), roster: optimalRoster };
+        return { team_code: teamCode, team_name: teamName, bpr_score: Math.round(totalScore), roster: optimalRoster };
     }
 
-    // 3. Fetch and Parse Master CSV
+    // 3. Load Data
     function loadLeagueData() {
         Papa.parse(CSV_URL, {
             download: true, 
@@ -167,11 +266,8 @@
             complete: function(results) {
                 let teamsData = {};
 
-                // Group players by Fantasy Team
                 results.data.forEach(row => {
                     let fantasyTeamCode = row["Status"] ? row["Status"].trim().toUpperCase() : "";
-                    
-                    // Skip Free Agents or Waivers
                     if (!fantasyTeamCode || fantasyTeamCode === "FA" || fantasyTeamCode === "WAIVERS") return;
 
                     let playerName = row["Player"];
@@ -185,42 +281,67 @@
                     }
                 });
 
-                // Run Optimization for each team found
                 let standings = [];
                 for (const [code, players] of Object.entries(teamsData)) {
-                    let longName = teamMap[code] || code; // Use translation map
-                    let result = optimizeRoster(longName, players);
-                    
-                    // Only add them if the math didn't completely fail
+                    let longName = teamMap[code] || code; 
+                    let result = optimizeRoster(code, longName, players);
                     if (result.bpr_score > 0) standings.push(result);
                 }
 
                 finalStandings = standings.sort((a, b) => b.bpr_score - a.bpr_score);
-                
                 document.getElementById('loading-state').classList.add('hidden');
-                document.getElementById('view-standings').classList.remove('hidden');
-                renderStandings();
+                
+                // ROUTING LOGIC
+                handleRouting();
             },
-            error: function(err) {
-                document.getElementById('loading-state').innerHTML = `<span style="color:#ff4444;">Error loading CSV: Check GitHub link and CORS.</span>`;
+            error: function() {
+                document.getElementById('loading-state').innerHTML = `Error loading data. Check GitHub link.`;
             }
         });
     }
 
-    // 4. Render UI
+    // 4. Routing & Navigation
+    function handleRouting() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedTeam = urlParams.get('team');
+        
+        if (requestedTeam) {
+            const teamObj = finalStandings.find(t => t.team_code === requestedTeam.toUpperCase());
+            if (teamObj) {
+                renderTeamDetail(teamObj);
+                return;
+            }
+        }
+        renderStandings();
+    }
+
+    // Handle the browser's back/forward buttons
+    window.addEventListener("popstate", () => {
+        handleRouting();
+    });
+
+    function navigateToTeam(teamCode) {
+        window.history.pushState({}, '', `?team=${teamCode}`);
+        handleRouting();
+    }
+
+    function navigateHome() {
+        window.history.pushState({}, '', window.location.pathname);
+        handleRouting();
+    }
+
+    // 5. Render UI
     function renderStandings() {
+        document.getElementById('view-team').classList.add('hidden');
+        document.getElementById('view-standings').classList.remove('hidden');
+        
         const tbody = document.getElementById('standings-body');
         tbody.innerHTML = ''; 
-        
-        if (finalStandings.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:30px;"><b>Missing Data!</b> Make sure the CSV you uploaded to GitHub contains Goalies.</td></tr>`;
-            return;
-        }
 
         finalStandings.forEach((team, index) => {
             const tr = document.createElement('tr');
-            tr.className = `clickable-row rank-${index + 1}`;
-            tr.onclick = () => showTeamDetail(team); 
+            tr.className = `clickable-row`;
+            tr.onclick = () => navigateToTeam(team.team_code); 
             tr.innerHTML = `
                 <td class="rank-col">${index + 1}</td>
                 <td class="team-name">${team.team_name}</td>
@@ -230,9 +351,10 @@
         });
     }
 
-    function showTeamDetail(team) {
+    function renderTeamDetail(team) {
         document.getElementById('view-standings').classList.add('hidden');
         document.getElementById('view-team').classList.remove('hidden');
+        
         document.getElementById('detail-team-name').innerText = team.team_name;
         document.getElementById('detail-total-score').innerText = team.bpr_score.toLocaleString();
         
@@ -242,16 +364,11 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><span class="pos-badge">${player.locked_position}</span></td>
-                <td style="font-weight: 600;">${player.name}</td>
-                <td class="score-col" style="color: var(--text-main); font-size: 15px;">${player.points}</td>
+                <td class="player-name">${player.name}</td>
+                <td class="score-col">${player.points}</td>
             `;
             tbody.appendChild(tr);
         });
-    }
-
-    function showStandings() {
-        document.getElementById('view-team').classList.add('hidden');
-        document.getElementById('view-standings').classList.remove('hidden');
     }
 
     window.onload = loadLeagueData;
