@@ -165,7 +165,6 @@
     <div class="header">
         <h1>The Conos BPR Calculations</h1>
         <p class="subtitle">The Conos League • End of Season Best Possible Roster</p>
-        <p id="calc-date">Calculating upload date...</p>
     </div>
 
     <div>
@@ -185,7 +184,7 @@
                 <tbody id="standings-body"></tbody>
             </table>
         </div>
-
+		
         <div id="view-team" class="hidden">
             <div class="btn-back" onclick="navigateHome()">← Standings</div>
             <h2 class="section-title" id="detail-team-name">Team Name</h2>
@@ -224,23 +223,23 @@
     let finalStandings = [];
 
     // Fetches the Last-Modified header from the raw CSV file
-    async function fetchFileDate() {
-        const dateElement = document.getElementById('calc-date');
-        try {
-            const response = await fetch(CSV_URL, { method: 'HEAD' });
-            const lastModified = response.headers.get('Last-Modified');
-            if (lastModified) {
-                const date = new Date(lastModified);
-                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-                dateElement.innerText = "Data as of: " + date.toLocaleDateString('en-US', options);
-            } else {
-                dateElement.innerText = ""; // Hide if GitHub prevents reading the header via CORS
-            }
-        } catch (e) {
-            dateElement.innerText = ""; 
+async function fetchFileDate() {
+    const dateElement = document.getElementById('calc-date-footer');
+    try {
+        const response = await fetch(CSV_URL, { method: 'HEAD' });
+        const lastModified = response.headers.get('Last-Modified');
+        if (lastModified) {
+            const date = new Date(lastModified);
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            dateElement.innerText = "Data Last Updated: " + date.toLocaleDateString('en-US', options);
+        } else {
+            // Fallback if GitHub blocks the timestamp headers
+            dateElement.innerText = "Data Last Updated: Just Now"; 
         }
+    } catch (e) {
+        dateElement.innerText = "Data Last Updated: Session Start"; 
     }
-
+}
     // 2. Math Engine
     function optimizeRoster(teamCode, teamName, players) {
         let model = {
