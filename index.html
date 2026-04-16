@@ -32,7 +32,7 @@
         }
 
         .container { 
-            max-width: 700px; /* Tighter width for better reading line-length */
+            max-width: 700px; 
             margin: 0 auto; 
             background-color: var(--bg-base); 
             min-height: 100vh;
@@ -46,19 +46,26 @@
 
         .header h1 { 
             margin: 0; 
-            font-family: 'Merriweather', serif; /* Editorial Serif for main headers */
+            font-family: 'Merriweather', serif; 
             font-size: 28px; 
             font-weight: 700; 
             color: var(--text-main); 
         }
 
-        .header p { 
+        .header p.subtitle { 
             margin: 8px 0 0; 
             font-size: 13px; 
             color: var(--text-muted); 
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
             font-weight: 600;
+        }
+
+        .header p#calc-date {
+            margin: 6px 0 0;
+            font-size: 12px;
+            color: var(--text-subtle);
+            font-weight: 500;
         }
         
         table { width: 100%; border-collapse: collapse; }
@@ -83,7 +90,7 @@
         .clickable-row { cursor: pointer; transition: background-color 0.15s ease; }
         .clickable-row:hover { background-color: var(--row-hover); }
         
-        .rank-col { font-weight: 700; color: var(--text-muted); width: 30px; font-size: 14px;}
+        .rank-col { font-weight: 700; color: var(--text-muted); width: 40px; font-size: 14px;}
         .team-name { font-weight: 700; font-size: 16px; color: var(--text-main); }
         
         .score-col { 
@@ -94,7 +101,6 @@
             font-variant-numeric: tabular-nums; 
         }
         
-        /* Premium Badges for Positions */
         .pos-badge { 
             display: inline-block; 
             color: var(--text-muted); 
@@ -157,8 +163,9 @@
 
 <div class="container">
     <div class="header">
-        <h1>BPR Standings</h1>
-        <p>The Conos League • End of Season Optimization</p>
+        <h1>The Conos BPR Calculations</h1>
+        <p class="subtitle">The Conos League • End of Season Best Possible Roster</p>
+        <p id="calc-date">Calculating upload date...</p>
     </div>
 
     <div>
@@ -170,9 +177,9 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Rnk</th>
+                        <th>Rank</th>
                         <th>Franchise</th>
-                        <th style="text-align: right;">Total Yield</th>
+                        <th style="text-align: right;">Total Points</th>
                     </tr>
                 </thead>
                 <tbody id="standings-body"></tbody>
@@ -193,7 +200,7 @@
                 <tbody id="team-body"></tbody>
                 <tfoot>
                     <tr class="total-row">
-                        <td colspan="2" style="text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Optimized BPR:</td>
+                        <td colspan="2" style="text-align: right; font-weight: 700; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Maximum Points:</td>
                         <td id="detail-total-score" class="score-col">0</td>
                     </tr>
                 </tfoot>
@@ -215,6 +222,24 @@
     };
 
     let finalStandings = [];
+
+    // Fetches the Last-Modified header from the raw CSV file
+    async function fetchFileDate() {
+        const dateElement = document.getElementById('calc-date');
+        try {
+            const response = await fetch(CSV_URL, { method: 'HEAD' });
+            const lastModified = response.headers.get('Last-Modified');
+            if (lastModified) {
+                const date = new Date(lastModified);
+                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                dateElement.innerText = "Data as of: " + date.toLocaleDateString('en-US', options);
+            } else {
+                dateElement.innerText = ""; // Hide if GitHub prevents reading the header via CORS
+            }
+        } catch (e) {
+            dateElement.innerText = ""; 
+        }
+    }
 
     // 2. Math Engine
     function optimizeRoster(teamCode, teamName, players) {
@@ -291,7 +316,6 @@
                 finalStandings = standings.sort((a, b) => b.bpr_score - a.bpr_score);
                 document.getElementById('loading-state').classList.add('hidden');
                 
-                // ROUTING LOGIC
                 handleRouting();
             },
             error: function() {
@@ -315,7 +339,6 @@
         renderStandings();
     }
 
-    // Handle the browser's back/forward buttons
     window.addEventListener("popstate", () => {
         handleRouting();
     });
@@ -371,7 +394,11 @@
         });
     }
 
-    window.onload = loadLeagueData;
+    // Initialize Everything
+    window.onload = () => {
+        fetchFileDate(); // Gets the modification timestamp
+        loadLeagueData(); // Loads the CSV and runs the math
+    };
 </script>
 
 </body>
