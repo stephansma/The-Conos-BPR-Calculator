@@ -61,7 +61,7 @@
 
     <div class="content">
         <div id="loading-state">
-            Downloading CSV and optimizing 100,000+ roster combinations...
+            Downloading CSV and optimizing combinations...
         </div>
 
         <div id="view-standings" class="hidden">
@@ -101,8 +101,7 @@
 </div>
 
 <script>
-    // 1. CONFIGURATION: Change this URL to your raw GitHub CSV link
-    // Ensure you click "Raw" on GitHub before copying the link!
+    // 1. CONFIGURATION: Your exact raw GitHub link goes here
     const CSV_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/Fantrax-Players-The%20Conos%20League.csv"; 
 
     // Translation Map
@@ -116,7 +115,7 @@
 
     let finalStandings = [];
 
-    // 2. The Math Engine (Integer Linear Programming)
+    // 2. The Math Engine (Now Highly Optimized using pure Simplex Linear Programming)
     function optimizeRoster(teamName, players) {
         let model = {
             "optimize": "points",
@@ -125,7 +124,8 @@
                 "C": {"equal": 3}, "LW": {"equal": 3}, "RW": {"equal": 3},
                 "D": {"equal": 4}, "G": {"equal": 3}
             },
-            "variables": {}, "ints": {}
+            "variables": {} 
+            // NOTE: 'ints' block completely removed to prevent the browser from choking.
         };
 
         players.forEach((p, idx) => {
@@ -134,7 +134,6 @@
                 if(["C", "LW", "RW", "D", "G"].includes(pos)) {
                     let varName = `${idx}_${pos}`; 
                     model.variables[varName] = { "points": p.points, [pos]: 1, [`player_${idx}`]: 1 };
-                    model.ints[varName] = 1;
                 }
             });
         });
@@ -144,7 +143,8 @@
         let totalScore = 0;
 
         for (const [key, value] of Object.entries(results)) {
-            if (value === 1 && key !== "feasible" && key !== "result" && key !== "bounded") {
+            // value > 0.5 bypasses any 0.999 floating point math quirks
+            if (value > 0.5 && key !== "feasible" && key !== "result" && key !== "bounded") {
                 let parts = key.split("_");
                 let playerIndex = parseInt(parts[0]);
                 let player = players[playerIndex];
@@ -160,13 +160,8 @@
 
     // 3. Fetch and Parse Master CSV
     function loadLeagueData() {
-        if (typeof solver === "undefined") {
-            document.getElementById('loading-state').innerHTML = `<span style="color:#ff4444;">Error: Math Engine failed to load. Check internet or ad-blockers.</span>`;
-            return;
-        }
-
         Papa.parse(CSV_URL, {
-            download: true, // Tells PapaParse this is a URL to fetch
+            download: true, 
             header: true,
             skipEmptyLines: true,
             complete: function(results) {
@@ -176,7 +171,7 @@
                 results.data.forEach(row => {
                     let fantasyTeamCode = row["Status"] ? row["Status"].trim().toUpperCase() : "";
                     
-                    // Skip Free Agents, Waivers, or empty rows
+                    // Skip Free Agents or Waivers
                     if (!fantasyTeamCode || fantasyTeamCode === "FA" || fantasyTeamCode === "WAIVERS") return;
 
                     let playerName = row["Player"];
@@ -195,6 +190,8 @@
                 for (const [code, players] of Object.entries(teamsData)) {
                     let longName = teamMap[code] || code; // Use translation map
                     let result = optimizeRoster(longName, players);
+                    
+                    // Only add them if the math didn't completely fail
                     if (result.bpr_score > 0) standings.push(result);
                 }
 
@@ -214,6 +211,12 @@
     function renderStandings() {
         const tbody = document.getElementById('standings-body');
         tbody.innerHTML = ''; 
+        
+        if (finalStandings.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:30px;"><b>Missing Data!</b> Make sure the CSV you uploaded to GitHub contains Goalies.</td></tr>`;
+            return;
+        }
+
         finalStandings.forEach((team, index) => {
             const tr = document.createElement('tr');
             tr.className = `clickable-row rank-${index + 1}`;
@@ -251,7 +254,6 @@
         document.getElementById('view-standings').classList.remove('hidden');
     }
 
-    // Start App
     window.onload = loadLeagueData;
 </script>
 
