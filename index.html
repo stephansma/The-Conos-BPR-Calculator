@@ -157,16 +157,6 @@
             font-weight: 500; 
             font-size: 14px;
         }
-        
-        .update-footer {
-    	text-align: center;
-    	padding: 30px 20px 50px;
-   	 	color: var(--text-subtle);
-   	 	font-size: 12px;
-    	font-weight: 500;
-    	letter-spacing: 0.5px;
-    	border-top: 1px solid var(--border-color);
-		}
     </style>
 </head>
 <body>
@@ -215,35 +205,13 @@
                 </tfoot>
             </table>
         </div>
-        </div> 
-
-    <div class="update-footer" id="calc-date-footer">
-        Checking data sync...
     </div>
-
-</div> <script>
+</div>
 
 <script>
     // 1. CONFIGURATION
     const CSV_URL = "https://raw.githubusercontent.com/stephansma/The-Conos-BPR-Calculator/refs/heads/main/Fantrax-Players-The%20Conos%20League.csv"; // PASTE YOUR RAW GITHUB URL HERE
-	// Add this right below const CSV_URL
-    const DATE_URL = "update.txt"; // PASTE YOUR RAW GITHUB URL FOR update.txt HERE
 
-    // Paste this anywhere in the upper half of your script
-    async function fetchFileDate() {
-        const dateElement = document.getElementById('calc-date-footer');
-        try {
-            const response = await fetch(DATE_URL);
-            if (response.ok) {
-                const dateText = await response.text();
-                dateElement.innerText = "Data Last Updated: " + dateText.trim();
-            } else {
-                dateElement.innerText = "Data Last Updated: Check GitHub Repo"; 
-            }
-        } catch (e) {
-            dateElement.innerText = "Data Last Updated: Unknown"; 
-        }
-    }
     const teamMap = {
         "ADB": "Armand's Dirty Birdz", "FZ": "Failowitz", "GG": "Ghol Gholab",
         "GRN": "Greenalls", "JS": "Jokerin Salama", "KR": "Kitimat Rebels",
